@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: logstash-service
+  # namespace: es
+  #annotations:
+  #  service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  #  service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "snet-uat-akselk-weu-01"
+ 
+spec:
+  selector:
+    app: logstash
+  ports:
+  - protocol: TCP
+    port: 5044
+    targetPort: 5044
+  type: NodePort

@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: logstash-deployment
+  # namespace: es
+spec:
+  serviceName: "logstash"
+  selector:
+    matchLabels:
+      app: logstash
+  updateStrategy:
+    type: RollingUpdate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: agentpool
+      #           operator: In
+      #           values:
+      #           - default
+ 
+       
+
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+       
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:8.7.0
+        env:
+        - name: LS_JAVA_OPTS
+          valueFrom:
+              configMapKeyRef:
+                  name: logstash-configmap
+                  key: LS_JAVA_OPTS
+                 
+        - name : LS_SETTINGS_DIR
+          valueFrom:
+              configMapKeyRef:
+                  name: logstash-configmap
+                  key: LS_SETTINGS_DIR
+
+
+        - name: ES_HOSTS
+          value: "https://elasticsearch-es-http:9200"
+        - name: ES_USER
+          value: "elastic"
+        - name: ES_PASSWORD
+          value: "MjQ0ano4eTVFNjdhWlhzanQyNHhhMllGCg=="    
+        # set resources as required                  
+        resources:
+          requests:
+            memory: 1Gi
+          limits:
+            memory: 1Gi
+       
+       
+        ports:
+          - containerPort: 5044
+       
+           
+        volumeMounts:
+          - name: config-volume
+            mountPath: /usr/share/logstash/config
+          - name: logstashvolume
+            mountPath: /usr/share/logstash/pipeline
+          - name: cert-ca
+            mountPath: "/etc/logstash/certificates"
+            readOnly : true
+        command: ["/bin/sh","-c"]
+        args:
+          - bin/logstash   --config.reload.automatic   ;
+            #while true; do sleep 1000; done;
+#      initContainers:
+#      - name: init-logstash
+#        command:
+#        - chown
+#        - -R
+#        - 0:1000
+#        - /usr/share/logstash/pipeline
+
+
+#        image: alsuatconregwe01.azurecr.io/busybox:latest
+#        imagePullPolicy: IfNotPresent
+#        name: volume-permissions
+#        resources: {}
+#        securityContext:
+
+
+#          runAsUser: 0
+#        terminationMessagePath: /dev/termination-log
+#        terminationMessagePolicy: File
+       
+#        volumeMounts:
+#        - name: logstash-pipeline-volume
+#          mountPath: /usr/share/logstash/pipeline
+
+
+     
+      
+      volumes:
+        - name: config-volume
+          configMap:
+            name: logstash-configmap
+            items:
+              - key: logstash.yml
+                path: logstash.yml
+              - key: pipelines.yml
+                path: pipelines.yml  
+        - name: cert-ca
+          secret:
+            secretName: elasticsearch-es-http-certs-public
+
+            
+        # - name: logstashvolume
+        #   hostPath:
+        #     path: /home/nik/Desktop/ECK/logstash/logstashVolume/
+
+        - name: logstashvolume
+          persistentVolumeClaim:
+            claimName: logstash-pvc
+      
+       
+               
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: logstash-pipeline-volume
+  #   spec:
+  #     accessModes: [ "ReadWriteOnce" ]
+  #     resources:
+  #       requests:
+  #         storage: 1Gi
+  #     storageClassName: standard

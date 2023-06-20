@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-configmap
+  # namespace: es
+data:
+  logstash.yml: |
+
+
+    http.host:  0.0.0.0
+    #path.config: /usr/share/logstash/pipelines
+   # config.reload.automatic:  true
+   # path.settings:  /usr/share/logstash/config
+   
+  LS_JAVA_OPTS:  -Xms2g -Xmx2g
+  LS_SETTINGS_DIR: /usr/share/logstash/config  
+
+  # xpack:
+  #   monitoring: 
+  #     enabled: false
+  #     elasticsearch:
+  #       username: "elastic"
+  #       password: '244jz8y5E67aZXsjt24xa2YF'
+  #       hosts: [ "https://elasticsearch-es-http:9200"] 
+
+  #       ssl:
+  #         verfication_mode: none
+ 
+ 
+  pipelines.yml: |
+ 
+    - pipeline.id: test
+      path.config: "/usr/share/logstash/pipeline/test.conf"
